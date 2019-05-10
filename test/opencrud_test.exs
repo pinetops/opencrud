@@ -5,7 +5,7 @@ defmodule OpencrudTest do
   defmodule ASimpleTypeSchema do
     use Absinthe.Schema
     use Absinthe.Relay.Schema, :modern
-    require OpenCrud.Notation
+    import OpenCrud.Notation
 
     @authors %{
       "1" => %{
@@ -29,13 +29,13 @@ defmodule OpencrudTest do
       end)
     end
 
-    OpenCrud.Notation.opencrud_node :author do
-      field(:first_name, non_null(:string))
-      field(:last_name, :string)
+    opencrud_node :author do
+      field :first_name, non_null(:string)
+      field :last_name, :string
     end
 
-    Absinthe.Schema.query do
-      OpenCrud.Notation.opencrud_list :author do
+    query do
+      opencrud_list :author do
         resolve_aggregate fn
           args, context ->
             {:ok, %{count: Enum.count(@authors)}}
