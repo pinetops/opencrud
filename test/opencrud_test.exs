@@ -35,15 +35,11 @@ defmodule OpencrudTest do
     end
 
     Absinthe.Schema.query do
-      OpenCrud.Notation.opencrud_list_query :author do
-        &RectangleWeb.ArtistResolver.list/2
-      end
-
       OpenCrud.Notation.opencrud_node_query :author do
         resolve(&RectangleWeb.ArtistResolver.get/2)
       end
 
-      OpenCrud.Notation.opencrud_connection_query :author do
+      OpenCrud.Notation.opencrud_list :author do
         resolve_aggregate fn
           args, context ->
             {:ok, %{count: Enum.count(@authors)}}

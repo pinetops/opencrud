@@ -5,16 +5,16 @@ defmodule OpenCrud.Notation do
     do_object(__CALLER__, type, block)
   end
 
-  defmacro opencrud_list_query(type, do: block) do
-    do_list_query(__CALLER__, type, block)
-  end
+#  defmacro opencrud_list_query(type, do: block) do
+#    do_list_query(__CALLER__, type, block)
+#  end
 
   defmacro opencrud_node_query(type, do: block) do
     do_node_query(__CALLER__, type, block)
   end
 
-  defmacro opencrud_connection_query(type, do: block) do
-    do_connection_query(__CALLER__, type, block)
+  defmacro opencrud_list(type, do: block) do
+    do_list(__CALLER__, type, block)
   end
 
   defmacro opencrud_update(type, do: block) do
@@ -250,10 +250,6 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  defp do_list_query(env, type, block) do
-    record_list_query!(env, type, block)
-  end
-
   @spec pluralize(arg) :: [arg] when arg: atom
   defp pluralize(name) do
     "#{name}s" |> String.to_atom()
@@ -261,28 +257,6 @@ defmodule OpenCrud.Notation do
 
   defp quoted_list_type(type) do
     quote do: non_null(list_of(non_null(unquote(type))))
-  end
-
-  def record_list_query!(env, type, block) do
-    import Absinthe.Schema.Notation
-
-    env
-    |> Notation.recordable!(:field)
-    |> Notation.record_field!(pluralize(type), [type: quoted_list_type(type)], [
-      list_query_body(type, block)
-    ])
-  end
-
-  defp list_query_body(type, block) do
-    quote do
-      arg :after, :string
-      arg :before, :string
-      arg :first, :integer
-      arg :last, :integer
-      arg :where, unquote("#{type}_where_input" |> String.to_atom())
-
-      unquote(block)
-    end
   end
 
   defp do_node_query(env, type, block) do
@@ -305,8 +279,8 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  defp do_connection_query(env, type, block) do
-    record_connection_query!(env, type, block)
+  defp do_list(env, type, block) do
+    record_list!(env, type, block)
   end
 
   defp naming_from_attrs!(attrs) do
@@ -318,20 +292,24 @@ defmodule OpenCrud.Notation do
       )
   end
 
-  def record_connection_query!(env, type, block) do
+  def record_list!(env, type, block) do
     resolve_list = Macro.prewalk(block, [], fn
       {:resolve_list, x, y}, b -> {0, b ++ {:resolve_list, x, y}}
       node, b -> {node, b}
     end)
     |> elem(1) |> elem(2) |> Enum.at(0)
-IO.inspect(resolve_list)
 
     resolve_aggregate = Macro.prewalk(block, [], fn
       {:resolve_aggregate, x, y}, b -> {0, b ++ {:aggregate, x, y}}
       node, b -> {node, b}
     end)
     |> elem(1) |> elem(2) |> Enum.at(0)
-    IO.inspect(resolve_aggregate)
+
+    env
+    |> Notation.recordable!(:field)
+    |> Notation.record_field!(pluralize(type), [type: quoted_list_type(type)], [
+      list_query_body(type, resolve_list, block)
+    ])
 
     # FIXME: Support args
     env
@@ -344,6 +322,18 @@ IO.inspect(resolve_list)
         node_connection_body(type, resolve_list, resolve_aggregate, block)
       ]
     )
+  end
+
+  defp list_query_body(type, resolve_list, block) do
+    quote do
+      arg :after, :string
+      arg :before, :string
+      arg :first, :integer
+      arg :last, :integer
+      arg :where, unquote("#{type}_where_input" |> String.to_atom())
+
+      resolve unquote(resolve_list)
+    end
   end
 
   defp node_connection_body(type, resolve_list, resolve_aggregate, block) do
