@@ -55,7 +55,8 @@ defmodule OpenCrud.Ecto do
   end
 
   def update(type, repo, schema, %{data: data, where: where}, _) do
-    with {:ok, %{id: id, type: type}} <- Relay.Node.from_global_id(where[:id], schema) do
+    with {:ok, %{id: id}} <- Relay.Node.from_global_id(where[:id], schema) do
+      # FIXME: check type is correct?
       repo.get(type, id)
       |> type.changeset(Map.merge(data, belongs_to_associations(type, data)))
       |> repo.update
