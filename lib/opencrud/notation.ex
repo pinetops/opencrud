@@ -319,18 +319,45 @@ defmodule OpenCrud.Notation do
   end
 
   def record_connection_query!(env, type, block) do
-     env
+    resolve_list = Macro.prewalk(block, [], fn
+      {:resolve_list, x, y}, b -> {0, b ++ {:resolve_list, x, y}}
+      node, b -> {node, b}
+    end)
+    |> elem(1) |> elem(2) |> Enum.at(0)
+IO.inspect(resolve_list)
+
+    resolve_aggregate = Macro.prewalk(block, [], fn
+      {:resolve_aggregate, x, y}, b -> {0, b ++ {:aggregate, x, y}}
+      node, b -> {node, b}
+    end)
+    |> elem(1) |> elem(2) |> Enum.at(0)
+    IO.inspect(resolve_aggregate)
+
+    # FIXME: Support args
+    env
     |> Notation.recordable!(:field)
-    |> Absinthe.Relay.Connection.Notation.record_connection_field!("#{type}s_connection" |> String.to_atom(), naming_from_attrs!([node_type: type]), [], [
-      node_connection_body(type, block)
-    ])
+    |> Absinthe.Relay.Connection.Notation.record_connection_field!(
+      "#{type}s_connection" |> String.to_atom(),
+      naming_from_attrs!(node_type: type),
+      [],
+      [
+        node_connection_body(type, resolve_list, resolve_aggregate, block)
+      ]
+    )
   end
 
-  defp node_connection_body(type, block) do
+  defp node_connection_body(type, resolve_list, resolve_aggregate, block) do
     quote do
-      arg :where, unquote("#{type}_where_input" |> String.to_atom())
+      arg(:where, unquote("#{type}_where_input" |> String.to_atom()))
 
-      unquote(block)
+      resolve fn
+        args, context ->
+          OpenCrud.Ecto.connection_wrapper(
+              args,
+              context,
+              unquote(resolve_aggregate),
+              unquote(resolve_list))
+        end
     end
   end
 

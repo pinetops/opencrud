@@ -44,20 +44,15 @@ defmodule OpencrudTest do
       end
 
       OpenCrud.Notation.opencrud_connection_query :author do
-        resolve(fn
-          # FIXME: Automate wrapping
+        resolve_aggregate fn
           args, context ->
-            OpenCrud.Ecto.connection_wrapper(
-              args,
-              context,
-              fn args, context ->
-                {:ok, %{count: Enum.count(@authors)}}
-              end,
-              fn args, context ->
-                {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
-              end
-            )
-        end)
+            {:ok, %{count: Enum.count(@authors)}}
+          end
+
+        resolve_list fn
+          args, context ->
+            {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
+          end
       end
     end
   end
