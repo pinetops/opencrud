@@ -50,6 +50,45 @@ defmodule OpencrudTest do
   end
 
   describe "Defining object and connection fields" do
+    test " allows querying objects" do
+      result =
+        """
+          query authors($first: Int) {
+            items: authors(first: $first)  {
+              id
+              first_name,
+              last_name,
+              __typename
+            }
+          }
+
+        """
+        |> Absinthe.run(
+          ASimpleTypeSchema,
+          variables: %{"first" => 5}
+        )
+
+      assert {:ok,
+              %{
+                data: %{
+                  "items" => [
+                    %{
+                      "__typename" => "Author",
+                      "first_name" => "Brian",
+                      "id" => "QXV0aG9yOjE=",
+                      "last_name" => "Phelps"
+                    },
+                    %{
+                      "__typename" => "Author",
+                      "first_name" => "Andrew",
+                      "id" => "QXV0aG9yOjI=",
+                      "last_name" => "Sparrow"
+                    }
+                  ]
+                }
+              }} == result
+    end
+
     test " allows querying connection and aggregates" do
       result =
         """
