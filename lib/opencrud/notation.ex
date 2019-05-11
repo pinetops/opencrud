@@ -5,10 +5,6 @@ defmodule OpenCrud.Notation do
     do_object(__CALLER__, type, block)
   end
 
-  #  defmacro opencrud_list_query(type, do: block) do
-  #    do_list_query(__CALLER__, type, block)
-  #  end
-
   defmacro opencrud_node_query(type, do: block) do
     do_node_query(__CALLER__, type, block)
   end
