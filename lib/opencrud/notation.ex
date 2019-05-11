@@ -5,9 +5,9 @@ defmodule OpenCrud.Notation do
     do_object(__CALLER__, type, block)
   end
 
-#  defmacro opencrud_list_query(type, do: block) do
-#    do_list_query(__CALLER__, type, block)
-#  end
+  #  defmacro opencrud_list_query(type, do: block) do
+  #    do_list_query(__CALLER__, type, block)
+  #  end
 
   defmacro opencrud_node_query(type, do: block) do
     do_node_query(__CALLER__, type, block)
@@ -52,10 +52,10 @@ defmodule OpenCrud.Notation do
     quote do
       @desc "The ID of an object"
       field :id, non_null(:id) do
-        resolve Absinthe.Relay.Node.global_id_resolver(unquote(name), nil)
+        resolve(Absinthe.Relay.Node.global_id_resolver(unquote(name), nil))
       end
 
-      interface :node
+      interface(:node)
     end
   end
 
@@ -104,7 +104,7 @@ defmodule OpenCrud.Notation do
   def record_update_input!(env, type, block) do
     type_name = "#{type}_update_input" |> String.to_atom()
 
-    #FIXME: allow non-required variation
+    # FIXME: allow non-required variation
     block = rewrite_fields(type, "update_one_required_without_#{type}s_input", block)
 
     Notation.record_input_object!(env, type_name, [], [
@@ -122,10 +122,11 @@ defmodule OpenCrud.Notation do
 
     type_path = [
       Access.elem(2),
-      Access.filter(fn b -> (elem(b, 0) == :field) &&
-                            (elem(b, 2) |> Enum.at(0) == field_name) &&
-                            (elem(b, 2) |> Enum.at(1) |> is_tuple)
-                    end),
+      Access.filter(fn b ->
+        elem(b, 0) == :field &&
+          elem(b, 2) |> Enum.at(0) == field_name &&
+          elem(b, 2) |> Enum.at(1) |> is_tuple
+      end),
       Access.elem(2),
       Access.at(1),
       Access.elem(2),
@@ -134,10 +135,11 @@ defmodule OpenCrud.Notation do
 
     name_path = [
       Access.elem(2),
-      Access.filter(fn b -> (elem(b, 0) == :field) &&
-                            (elem(b, 2) |> Enum.at(0) == field_name) &&
-                            !(elem(b,2) |> Enum.at(1) |> is_tuple)
-                    end),
+      Access.filter(fn b ->
+        elem(b, 0) == :field &&
+          elem(b, 2) |> Enum.at(0) == field_name &&
+          !(elem(b, 2) |> Enum.at(1) |> is_tuple)
+      end),
       Access.elem(2)
     ]
 
@@ -147,8 +149,8 @@ defmodule OpenCrud.Notation do
   end
 
   def field_type(field_data) do
-    if (get_in(field_data, [Access.at(1)]) |> is_tuple) do
-      get_in(field_data, [Access.at(1),Access.elem(2),Access.at(0)])
+    if get_in(field_data, [Access.at(1)]) |> is_tuple do
+      get_in(field_data, [Access.at(1), Access.elem(2), Access.at(0)])
     else
       get_in(field_data, [Access.at(1)])
     end
@@ -168,7 +170,7 @@ defmodule OpenCrud.Notation do
     get_in(block, path)
     # FIXME: check for other primitive types
     |> Enum.filter(fn a -> field_type(a) != :string end)
-    |> Enum.reduce(block, fn(a, acc) -> replace_type(type, field_name(a), replacement, acc) end)
+    |> Enum.reduce(block, fn a, acc -> replace_type(type, field_name(a), replacement, acc) end)
   end
 
   def record_create_input!(env, type, block) do
@@ -201,26 +203,26 @@ defmodule OpenCrud.Notation do
     get_in(block, path)
     # FIXME: check for other primitive types
     |> Enum.filter(fn a -> field_type(a) != :string end)
-    |> Enum.map(fn(a) -> field_name(a) end)
+    |> Enum.map(fn a -> field_name(a) end)
     |> Enum.map(fn a ->
-                  type_to_pass = "#{a}_create_one_without_#{type}s_input" |> String.to_atom()
+      type_to_pass = "#{a}_create_one_without_#{type}s_input" |> String.to_atom()
 
-                  Notation.record_input_object!(env, type_to_pass, [], [
-                    field_create_update_one_without_type_input_body(a)
-                  ])
+      Notation.record_input_object!(env, type_to_pass, [], [
+        field_create_update_one_without_type_input_body(a)
+      ])
 
-                  type_to_pass = "#{a}_update_one_required_without_#{type}s_input" |> String.to_atom()
+      type_to_pass = "#{a}_update_one_required_without_#{type}s_input" |> String.to_atom()
 
-                  Notation.record_input_object!(env, type_to_pass, [], [
-                    field_create_update_one_without_type_input_body(a)
-                  ])
-                end)
+      Notation.record_input_object!(env, type_to_pass, [], [
+        field_create_update_one_without_type_input_body(a)
+      ])
+    end)
   end
 
   defp field_create_update_one_without_type_input_body(field_name) do
     # FIXME: Add handling for create
     quote do
-      field :connect, unquote("#{field_name}_where_unique_input" |> String.to_atom)
+      field :connect, unquote("#{field_name}_where_unique_input" |> String.to_atom())
     end
   end
 
@@ -273,7 +275,7 @@ defmodule OpenCrud.Notation do
 
   defp node_query_body(type, block) do
     quote do
-      arg :where, unquote("#{type}_where_unique_input" |> String.to_atom())
+      arg(:where, unquote("#{type}_where_unique_input" |> String.to_atom()))
 
       unquote(block)
     end
@@ -284,7 +286,8 @@ defmodule OpenCrud.Notation do
   end
 
   defp naming_from_attrs!(attrs) do
-    naming = Absinthe.Relay.Connection.Notation.Naming.define(attrs[:node_type], attrs[:connection])
+    naming =
+      Absinthe.Relay.Connection.Notation.Naming.define(attrs[:node_type], attrs[:connection])
 
     naming ||
       raise(
@@ -293,17 +296,23 @@ defmodule OpenCrud.Notation do
   end
 
   def record_list!(env, type, block) do
-    resolve_list = Macro.prewalk(block, [], fn
-      {:resolve_list, x, y}, b -> {0, b ++ {:resolve_list, x, y}}
-      node, b -> {node, b}
-    end)
-    |> elem(1) |> elem(2) |> Enum.at(0)
+    resolve_list =
+      Macro.prewalk(block, [], fn
+        {:resolve_list, x, y}, b -> {0, b ++ {:resolve_list, x, y}}
+        node, b -> {node, b}
+      end)
+      |> elem(1)
+      |> elem(2)
+      |> Enum.at(0)
 
-    resolve_aggregate = Macro.prewalk(block, [], fn
-      {:resolve_aggregate, x, y}, b -> {0, b ++ {:aggregate, x, y}}
-      node, b -> {node, b}
-    end)
-    |> elem(1) |> elem(2) |> Enum.at(0)
+    resolve_aggregate =
+      Macro.prewalk(block, [], fn
+        {:resolve_aggregate, x, y}, b -> {0, b ++ {:aggregate, x, y}}
+        node, b -> {node, b}
+      end)
+      |> elem(1)
+      |> elem(2)
+      |> Enum.at(0)
 
     env
     |> Notation.recordable!(:field)
@@ -326,13 +335,13 @@ defmodule OpenCrud.Notation do
 
   defp list_query_body(type, resolve_list, block) do
     quote do
-      arg :after, :string
-      arg :before, :string
-      arg :first, :integer
-      arg :last, :integer
-      arg :where, unquote("#{type}_where_input" |> String.to_atom())
+      arg(:after, :string)
+      arg(:before, :string)
+      arg(:first, :integer)
+      arg(:last, :integer)
+      arg(:where, unquote("#{type}_where_input" |> String.to_atom()))
 
-      resolve unquote(resolve_list)
+      resolve(unquote(resolve_list))
     end
   end
 
@@ -340,14 +349,15 @@ defmodule OpenCrud.Notation do
     quote do
       arg(:where, unquote("#{type}_where_input" |> String.to_atom()))
 
-      resolve fn
+      resolve(fn
         args, context ->
           OpenCrud.Ecto.connection_wrapper(
-              args,
-              context,
-              unquote(resolve_aggregate),
-              unquote(resolve_list))
-        end
+            args,
+            context,
+            unquote(resolve_aggregate),
+            unquote(resolve_list)
+          )
+      end)
     end
   end
 
@@ -368,8 +378,8 @@ defmodule OpenCrud.Notation do
 
   defp update_body(type) do
     quote do
-      arg :data, non_null(unquote("#{type}_update_input" |> String.to_atom()))
-      arg :where, non_null(unquote("#{type}_where_unique_input" |> String.to_atom()))
+      arg(:data, non_null(unquote("#{type}_update_input" |> String.to_atom())))
+      arg(:where, non_null(unquote("#{type}_where_unique_input" |> String.to_atom())))
     end
   end
 
@@ -390,7 +400,7 @@ defmodule OpenCrud.Notation do
 
   defp create_body(type) do
     quote do
-      arg :data, non_null(unquote("#{type}_create_input" |> String.to_atom()))
+      arg(:data, non_null(unquote("#{type}_create_input" |> String.to_atom())))
     end
   end
 end

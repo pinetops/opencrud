@@ -24,6 +24,7 @@ defmodule OpencrudTest do
       resolve_type(fn
         %{}, _ ->
           :link
+
         _, _ ->
           nil
       end)
@@ -39,12 +40,12 @@ defmodule OpencrudTest do
         resolve_aggregate fn
           args, context ->
             {:ok, %{count: Enum.count(@authors)}}
-          end
+        end
 
         resolve_list fn
           args, context ->
             {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
-          end
+        end
       end
     end
   end
