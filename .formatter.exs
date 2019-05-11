@@ -1,8 +1,10 @@
 # Used by "mix format"
 locals_without_parens = [
+  arg: 2,
   field: 2,
   field: 3,
   field: 4,
+  resolve: 1,
   resolve_list: 1,
   resolve_aggregate: 1
 ]

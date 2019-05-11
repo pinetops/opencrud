@@ -52,7 +52,7 @@ defmodule OpenCrud.Notation do
     quote do
       @desc "The ID of an object"
       field :id, non_null(:id) do
-        resolve(Absinthe.Relay.Node.global_id_resolver(unquote(name), nil))
+        resolve Absinthe.Relay.Node.global_id_resolver(unquote(name), nil)
       end
 
       interface(:node)
@@ -335,11 +335,11 @@ defmodule OpenCrud.Notation do
 
   defp list_query_body(type, resolve_list, block) do
     quote do
-      arg(:after, :string)
-      arg(:before, :string)
-      arg(:first, :integer)
-      arg(:last, :integer)
-      arg(:where, unquote("#{type}_where_input" |> String.to_atom()))
+      arg :after, :string
+      arg :before, :string
+      arg :first, :integer
+      arg :last, :integer
+      arg :where, unquote("#{type}_where_input" |> String.to_atom())
 
       resolve(unquote(resolve_list))
     end
@@ -347,9 +347,9 @@ defmodule OpenCrud.Notation do
 
   defp node_connection_body(type, resolve_list, resolve_aggregate, block) do
     quote do
-      arg(:where, unquote("#{type}_where_input" |> String.to_atom()))
+      arg :where, unquote("#{type}_where_input" |> String.to_atom())
 
-      resolve(fn
+      resolve fn
         args, context ->
           OpenCrud.Ecto.connection_wrapper(
             args,
@@ -357,7 +357,7 @@ defmodule OpenCrud.Notation do
             unquote(resolve_aggregate),
             unquote(resolve_list)
           )
-      end)
+      end
     end
   end
 
@@ -378,8 +378,8 @@ defmodule OpenCrud.Notation do
 
   defp update_body(type) do
     quote do
-      arg(:data, non_null(unquote("#{type}_update_input" |> String.to_atom())))
-      arg(:where, non_null(unquote("#{type}_where_unique_input" |> String.to_atom())))
+      arg :data, non_null(unquote("#{type}_update_input" |> String.to_atom()))
+      arg :where, non_null(unquote("#{type}_where_unique_input" |> String.to_atom()))
     end
   end
 
@@ -400,7 +400,7 @@ defmodule OpenCrud.Notation do
 
   defp create_body(type) do
     quote do
-      arg(:data, non_null(unquote("#{type}_create_input" |> String.to_atom())))
+      arg :data, non_null(unquote("#{type}_create_input" |> String.to_atom()))
     end
   end
 end
