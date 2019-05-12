@@ -56,15 +56,20 @@ defmodule OpenCrud.Ecto do
     {:ok, repo.get(query, id)}
   end
 
-  def update(type, repo, %{data: data, where: where}, context) do
-    with {:ok, %{id: id}} <- Relay.Node.from_global_id(where[:id], context.schema) do
-      # FIXME: check type is correct?
-      repo.get(type, id)
-      |> type.changeset(Map.merge(data, belongs_to_associations(type, data, context)))
-      |> repo.update
-    end
+  def id_query(query, input, context) do
+    require Ecto.Query
 
+    with {:ok, %{id: id}} <- Relay.Node.from_global_id(input.where[:id], context.schema) do
+      where(query, [a], a.id == ^id)
+    end
     # FIXME: handle errors
+  end
+
+  def update_changeset(struct, input, context) do
+    %name{} = struct
+
+    struct
+    |> name.changeset(Map.merge(input.data, belongs_to_associations(name, input.data, context)))
   end
 
   defp connected_objects(data, context) do
