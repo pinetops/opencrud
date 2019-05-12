@@ -56,23 +56,23 @@ defmodule OpenCrud.Ecto do
     {:ok, repo.get(query, id)}
   end
 
-  def update(type, repo, schema, %{data: data, where: where}, _) do
-    with {:ok, %{id: id}} <- Relay.Node.from_global_id(where[:id], schema) do
+  def update(type, repo, %{data: data, where: where}, context) do
+    with {:ok, %{id: id}} <- Relay.Node.from_global_id(where[:id], context.schema) do
       # FIXME: check type is correct?
       repo.get(type, id)
-      |> type.changeset(Map.merge(data, belongs_to_associations(type, data)))
+      |> type.changeset(Map.merge(data, belongs_to_associations(type, data, context)))
       |> repo.update
     end
 
     # FIXME: handle errors
   end
 
-  defp connected_objects(data) do
+  defp connected_objects(data, context) do
     data
     |> Enum.filter(fn c -> is_map(elem(c, 1)) && Map.has_key?(elem(c, 1), :connect) end)
     |> Enum.map(fn k ->
       {elem(k, 0),
-       Relay.Node.from_global_id(elem(k, 1)[:connect][:id], RectangleWeb.Schema) |> elem(1)}
+       Relay.Node.from_global_id(elem(k, 1)[:connect][:id], context.schema) |> elem(1)}
     end)
     |> Map.new()
   end
@@ -86,17 +86,17 @@ defmodule OpenCrud.Ecto do
     |> Enum.filter(&match?(%Ecto.Association.BelongsTo{}, &1))
   end
 
-  defp belongs_to_associations(type, data) do
-    keys = connected_objects(data)
+  defp belongs_to_associations(type, data, context) do
+    keys = connected_objects(data, context)
 
     belongs_to(type)
     |> Enum.map(fn c -> {c.owner_key, keys[c.field][:id]} end)
     |> Map.new()
   end
 
-  def create(type, repo, %{data: data}, _) do
+  def create(type, repo, %{data: data}, context) do
     struct(type)
-    |> type.changeset(Map.merge(data, belongs_to_associations(type, data)))
+    |> type.changeset(Map.merge(data, belongs_to_associations(type, data, context)))
     |> repo.insert
   end
 
