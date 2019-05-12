@@ -99,10 +99,9 @@ defmodule OpenCrud.Ecto do
     |> Map.new()
   end
 
-  def create(type, repo, %{data: data}, context) do
+  def create_changeset(type, %{data: data}, context) do
     struct(type)
     |> type.changeset(Map.merge(data, belongs_to_associations(type, data, context)))
-    |> repo.insert
   end
 
   defp field_list(context, name) do
