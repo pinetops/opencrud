@@ -16,31 +16,6 @@ defmodule OpenCrud.Ecto do
     end
   end
 
-  @spec make_connections(
-          any(),
-          %{
-            after: nil | integer(),
-            before: nil | integer(),
-            first: nil | integer(),
-            last: nil | integer()
-          },
-          [
-            {:count, non_neg_integer()}
-            | {:has_next_page, boolean()}
-            | {:has_previous_page, boolean()}
-          ]
-        ) ::
-          {:error, <<_::64, _::_*8>>}
-          | {:ok,
-             %{
-               edges: [map()],
-               page_info: %{
-                 end_cursor: binary(),
-                 has_next_page: boolean(),
-                 has_previous_page: boolean(),
-                 start_cursor: binary()
-               }
-             }}
   def make_connections(records, args, opts \\ []) do
     require Ecto.Query
 
