@@ -56,7 +56,7 @@ defmodule OpenCrud.Notation do
   end
 
   def record_aggregate!(env, type, block) do
-    type = "aggregate_#{type}s" |> String.to_atom()
+    type = "aggregate_#{Inflex.pluralize(type)}" |> String.to_atom()
 
     Notation.record_object!(env, type, [], [
       aggregate_body()
@@ -170,7 +170,7 @@ defmodule OpenCrud.Notation do
   end
 
   def record_create_input!(env, type, block) do
-    block = rewrite_fields(type, "create_one_without_#{type}s_input", block)
+    block = rewrite_fields(type, "create_one_without_#{Inflex.pluralize(type)}_input", block)
 
     type = "#{type}_create_input" |> String.to_atom()
 
@@ -201,13 +201,13 @@ defmodule OpenCrud.Notation do
     |> Enum.filter(fn a -> field_type(a) != :string end)
     |> Enum.map(fn a -> field_name(a) end)
     |> Enum.map(fn a ->
-      type_to_pass = "#{a}_create_one_without_#{type}s_input" |> String.to_atom()
+      type_to_pass = "#{a}_create_one_without_#{Inflex.pluralize(type)}_input" |> String.to_atom()
 
       Notation.record_input_object!(env, type_to_pass, [], [
         field_create_update_one_without_type_input_body(a)
       ])
 
-      type_to_pass = "#{a}_update_one_required_without_#{type}s_input" |> String.to_atom()
+      type_to_pass = "#{a}_update_one_required_without_#{Inflex.pluralize(type)}_input" |> String.to_atom()
 
       Notation.record_input_object!(env, type_to_pass, [], [
         field_create_update_one_without_type_input_body(a)
@@ -230,7 +230,7 @@ defmodule OpenCrud.Notation do
 
   defp connection_body(type) do
     quote do
-      field :aggregate, unquote("aggregate_#{type}s" |> String.to_atom())
+      field :aggregate, unquote("aggregate_#{Inflex.pluralize(type)}" |> String.to_atom())
       field :edges, non_null(list_of(non_null(unquote("#{type}_edge" |> String.to_atom()))))
     end
   end
@@ -246,11 +246,6 @@ defmodule OpenCrud.Notation do
       field :node, unquote(type)
       field :cursor, non_null(:string)
     end
-  end
-
-  @spec pluralize(arg) :: [arg] when arg: atom
-  defp pluralize(name) do
-    "#{name}s" |> String.to_atom()
   end
 
   defp quoted_list_type(type) do
@@ -312,7 +307,7 @@ defmodule OpenCrud.Notation do
 
     env
     |> Notation.recordable!(:field)
-    |> Notation.record_field!(pluralize(type), [type: quoted_list_type(type)], [
+    |> Notation.record_field!(Inflex.pluralize(type) |> String.to_atom(), [type: quoted_list_type(type)], [
       list_query_body(type, resolve_list, block)
     ])
 
@@ -320,7 +315,7 @@ defmodule OpenCrud.Notation do
     env
     |> Notation.recordable!(:field)
     |> Absinthe.Relay.Connection.Notation.record_connection_field!(
-      "#{type}s_connection" |> String.to_atom(),
+      "#{Inflex.pluralize(type)}_connection" |> String.to_atom(),
       naming_from_attrs!(node_type: type),
       [],
       [

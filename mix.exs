@@ -25,6 +25,7 @@ defmodule Opencrud.MixProject do
     [
       {:absinthe_relay, "~> 1.4"},
       {:ecto, "~> 3.1"},
+      { :inflex, "~> 1.10.0" },
       {:excoveralls, "~> 0.10", only: :test}
     ]
   end
