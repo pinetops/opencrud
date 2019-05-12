@@ -55,7 +55,7 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  def record_aggregate!(env, type, block) do
+  def record_aggregate!(env, type, _) do
     type = "aggregate_#{Inflex.pluralize(type)}" |> String.to_atom()
 
     Notation.record_object!(env, type, [], [
@@ -101,14 +101,14 @@ defmodule OpenCrud.Notation do
     type_name = "#{type}_update_input" |> String.to_atom()
 
     # FIXME: allow non-required variation
-    block = rewrite_fields(type, "update_one_required_without_#{type}s_input", block)
+    block = rewrite_fields("update_one_required_without_#{type}s_input", block)
 
     Notation.record_input_object!(env, type_name, [], [
       block
     ])
   end
 
-  defp replace_type(type, field_name, replacement, block) do
+  defp replace_type(field_name, replacement, block) do
     #  {:__block__, [],
     #  [
     #    {:field, [line: 28], [:title, {:non_null, [line: 28], [:string]}]},
@@ -156,7 +156,7 @@ defmodule OpenCrud.Notation do
     get_in(field_data, [Access.at(0)])
   end
 
-  def rewrite_fields(type, replacement, block) do
+  def rewrite_fields(replacement, block) do
     path = [
       Access.elem(2),
       Access.filter(fn b -> elem(b, 0) == :field end),
@@ -166,11 +166,11 @@ defmodule OpenCrud.Notation do
     get_in(block, path)
     # FIXME: check for other primitive types
     |> Enum.filter(fn a -> field_type(a) != :string end)
-    |> Enum.reduce(block, fn a, acc -> replace_type(type, field_name(a), replacement, acc) end)
+    |> Enum.reduce(block, fn a, acc -> replace_type(field_name(a), replacement, acc) end)
   end
 
   def record_create_input!(env, type, block) do
-    block = rewrite_fields(type, "create_one_without_#{Inflex.pluralize(type)}_input", block)
+    block = rewrite_fields("create_one_without_#{Inflex.pluralize(type)}_input", block)
 
     type = "#{type}_create_input" |> String.to_atom()
 
