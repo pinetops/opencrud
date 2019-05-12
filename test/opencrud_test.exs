@@ -38,12 +38,12 @@ defmodule OpencrudTest do
     query do
       opencrud_list :author do
         resolve_aggregate fn
-          args, context ->
+          _, _ ->
             {:ok, %{count: Enum.count(@authors)}}
         end
 
         resolve_list fn
-          args, context ->
+          _, _ ->
             {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
         end
       end

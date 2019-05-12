@@ -69,7 +69,7 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  def record_where_unique_input!(env, type, block) do
+  def record_where_unique_input!(env, type, _) do
     type = "#{type}_where_unique_input" |> String.to_atom()
 
     Notation.record_input_object!(env, type, [], [
@@ -83,7 +83,7 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  def record_where_input!(env, type, block) do
+  def record_where_input!(env, type, _) do
     type = "#{type}_where_input" |> String.to_atom()
 
     Notation.record_input_object!(env, type, [], [
@@ -222,7 +222,7 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  def record_connection!(env, type, block) do
+  def record_connection!(env, type, _) do
     Notation.record_object!(env, "#{type}_connection" |> String.to_atom(), [], [
       connection_body(type)
     ])
@@ -235,7 +235,7 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  def record_edge!(env, type, block) do
+  def record_edge!(env, type, _) do
     Notation.record_object!(env, "#{type}_edge" |> String.to_atom(), [], [
       edge_body(type)
     ])
@@ -329,7 +329,7 @@ defmodule OpenCrud.Notation do
     )
   end
 
-  defp list_query_body(type, resolve_list, block) do
+  defp list_query_body(type, resolve_list, _) do
     quote do
       arg :after, :string
       arg :before, :string
@@ -341,7 +341,7 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  defp node_connection_body(type, resolve_list, resolve_aggregate, block) do
+  defp node_connection_body(type, resolve_list, resolve_aggregate, _) do
     quote do
       arg :where, unquote("#{type}_where_input" |> String.to_atom())
 
