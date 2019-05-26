@@ -43,7 +43,17 @@ defmodule OpencrudTest do
         end
 
         resolve_list fn
+          %{where: %{ id_in: ids }}, _ ->
+            ids = Enum.map(ids, fn enc_id ->
+              with {:ok, %{id: id, type: _type}} <-
+                Absinthe.Relay.Node.from_global_id(enc_id, __MODULE__) do
+                  id
+                end
+            end)
+
+            {:ok, Enum.map(Enum.filter(@authors, fn a -> Enum.member?(ids, elem(a, 1).id) end) , fn a -> elem(a, 1) end)}
           _, _ ->
+
             {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
         end
       end
@@ -84,6 +94,39 @@ defmodule OpencrudTest do
                       "first_name" => "Andrew",
                       "id" => "QXV0aG9yOjI=",
                       "last_name" => "Sparrow"
+                    }
+                  ]
+                }
+              }} == result
+    end
+
+    test " allows querying objects by ids" do
+      result =
+        """
+          query authors($first: Int, $where: AuthorWhereInput) {
+            items: authors(first: $first, where: $where)  {
+              id
+              first_name,
+              last_name,
+              __typename
+            }
+          }
+
+        """
+        |> Absinthe.run(
+          ASimpleTypeSchema,
+          variables: %{"first" => 5, "where" => %{ "idIn" => [ "QXV0aG9yOjE="]}}
+        )
+
+      assert {:ok,
+              %{
+                data: %{
+                  "items" => [
+                    %{
+                      "__typename" => "Author",
+                      "first_name" => "Brian",
+                      "id" => "QXV0aG9yOjE=",
+                      "last_name" => "Phelps"
                     }
                   ]
                 }
