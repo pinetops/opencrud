@@ -36,6 +36,15 @@ defmodule OpencrudTest do
     end
 
     query do
+      opencrud_node_query :author do
+        resolve fn
+          %{where: %{ id: id }}, _ ->
+            {:ok, Enum.find(@authors, fn a -> id == elem(a, 1).id end) |> elem(1)}
+          _, _ ->
+            {:error, "Not found"}
+        end
+      end
+
       opencrud_list :author do
         resolve_aggregate fn
           _, _ ->
@@ -88,6 +97,38 @@ defmodule OpencrudTest do
                       "last_name" => "Sparrow"
                     }
                   ]
+                }
+              }} == result
+    end
+
+    test " allows querying objects by id" do
+      result =
+        """
+          query author($where: AuthorWhereUniqueInput) {
+            author: author(where: $where)  {
+              id
+              first_name,
+              last_name,
+              __typename
+            }
+          }
+
+        """
+        |> Absinthe.run(
+          ASimpleTypeSchema,
+          variables: %{"where" => %{ "id" => "QXV0aG9yOjE="}}
+        )
+
+      assert {:ok,
+              %{
+                data: %{
+                  "author" =>
+                    %{
+                      "__typename" => "Author",
+                      "first_name" => "Brian",
+                      "id" => "QXV0aG9yOjE=",
+                      "last_name" => "Phelps"
+                    }
                 }
               }} == result
     end

@@ -268,6 +268,10 @@ defmodule OpenCrud.Notation do
     quote do
       arg(:where, unquote("#{type}_where_unique_input" |> String.to_atom()))
 
+      # FIXME: This would be better put on the input object directly, but
+      #        the API doesn't appear to support that
+      middleware Absinthe.Relay.Node.ParseIDs, where: [id: :author]
+
       unquote(block)
     end
   end
