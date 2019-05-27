@@ -29,30 +29,17 @@ defmodule OpenCrud.Ecto do
     end
   end
 
-  def filter(query, args, %{schema: schema}) do
+  def filter(query, %{where: %{id_in: id_list}}, _) do
     require Ecto.Query
 
-    if args[:where][:id_in] do
-      id_list =
-        Enum.map(args[:where][:id_in], fn enc_id ->
-          with {:ok, %{id: id, type: type}} <-
-                 Relay.Node.from_global_id(enc_id, schema) do
-            id
-          end
-
-          # FIXME: handle errors
-        end)
-
-      where(query, [a], a.id in ^id_list)
-    else
-      query
-    end
+    where(query, [a], a.id in ^id_list)
   end
 
-  def get(query, repo, args, %{schema: schema}) do
-    {status, %{id: id, type: type}} =
-      Relay.Node.from_global_id(args[:where][:id], schema)
+  def filter(query, _, _) do
+    query
+  end
 
+  def get(query, repo, %{where: %{id: id}}, _) do
     {:ok, repo.get(query, id)}
   end
 
