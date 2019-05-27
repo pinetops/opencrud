@@ -332,6 +332,10 @@ defmodule OpenCrud.Notation do
       arg :last, :integer
       arg :where, unquote("#{type}_where_input" |> String.to_atom())
 
+      # FIXME: This would be better put on the input object directly, but
+      #        the API doesn't appear to support that
+      middleware Absinthe.Relay.Node.ParseIDs, where: [id_in: unquote(type)]
+
       resolve(unquote(resolve_list))
     end
   end
@@ -339,6 +343,10 @@ defmodule OpenCrud.Notation do
   defp node_connection_body(type, resolve_list, resolve_aggregate, _) do
     quote do
       arg :where, unquote("#{type}_where_input" |> String.to_atom())
+
+      # FIXME: This would be better put on the input object directly, but
+      #        the API doesn't appear to support that
+      middleware Absinthe.Relay.Node.ParseIDs, where: [id_in: unquote(type)]
 
       resolve fn
         args, context ->

@@ -44,16 +44,8 @@ defmodule OpencrudTest do
 
         resolve_list fn
           %{where: %{ id_in: ids }}, _ ->
-            ids = Enum.map(ids, fn enc_id ->
-              with {:ok, %{id: id, type: _type}} <-
-                Absinthe.Relay.Node.from_global_id(enc_id, __MODULE__) do
-                  id
-                end
-            end)
-
             {:ok, Enum.map(Enum.filter(@authors, fn a -> Enum.member?(ids, elem(a, 1).id) end) , fn a -> elem(a, 1) end)}
           _, _ ->
-
             {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
         end
       end
