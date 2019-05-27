@@ -270,7 +270,7 @@ defmodule OpenCrud.Notation do
 
       # FIXME: This would be better put on the input object directly, but
       #        the API doesn't appear to support that
-      middleware Absinthe.Relay.Node.ParseIDs, where: [id: :author]
+      middleware Absinthe.Relay.Node.ParseIDs, where: [id: unquote(type)]
 
       unquote(block)
     end
