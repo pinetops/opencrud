@@ -20,6 +20,19 @@ defmodule OpencrudTest do
       }
     }
 
+    @books %{
+      "1" => %{
+        id: "1",
+        title: "A Game of Thrones",
+        author_id: "1"
+      },
+      "2" => %{
+        id: "2",
+        title: "A Clash of Kings",
+        author_id: "2"
+      }
+    }
+
     node interface do
       resolve_type(fn
         %{}, _ ->
@@ -33,6 +46,14 @@ defmodule OpencrudTest do
     opencrud_node :author do
       field :first_name, non_null(:string)
       field :last_name, :string
+    end
+
+    opencrud_node :book do
+      field :title, non_null(:string)
+      field :author, non_null(:author)
+      #, resolve: fn a ->
+      #  {:ok, Enum.map(Enum.find(@authors, fn a ->elem(a, 1).id , fn a -> elem(a, 1) end)}
+      #end
     end
 
     query do
@@ -63,6 +84,30 @@ defmodule OpencrudTest do
         where do
           field :first_name, :string
         end
+      end
+
+      opencrud_list :book do
+        resolve_aggregate fn
+          _, _ ->
+            {:ok, %{count: Enum.count(@books)}}
+        end
+
+        resolve_list fn
+          %{where: %{ id_in: ids }}, _ ->
+            {:ok, Enum.map(Enum.filter(@books, fn a -> Enum.member?(ids, elem(a, 1).id) end) , fn a -> elem(a, 1) end)}
+          %{where: %{ author: %{ id: author_id }}}, _ ->
+           {:ok, Enum.map(Enum.filter(@books, fn a -> elem(a, 1).author_id == author_id.id end) , fn a -> elem(a, 1) end)}
+            _, _ ->
+            {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
+        end
+
+        middleware Absinthe.Relay.Node.ParseIDs, where: [author: [id: [:author]]]
+
+        where do
+          field :title, :string
+          field :author, :author_where_unique_input
+        end
+
       end
     end
   end
@@ -254,6 +299,37 @@ defmodule OpencrudTest do
                       }
                     ]
                   }
+                }
+              }} == result
+    end
+
+    test " allows querying objects by reference" do
+      result =
+        """
+          query books($first: Int, $where: BookWhereInput) {
+            items: books(first: $first, where: $where)  {
+              id,
+              title
+              __typename
+            }
+          }
+
+        """
+        |> Absinthe.run(
+          ASimpleTypeSchema,
+          variables: %{"first" => 5, "where" => %{ "author" => %{ "id" => "QXV0aG9yOjE="}}}
+        )
+
+      assert {:ok,
+              %{
+                data: %{
+                  "items" => [
+                    %{
+                      "__typename" => "Book",
+                      "id" => "Qm9vazox",
+                      "title" => "A Game of Thrones"
+                    }
+                  ]
                 }
               }} == result
     end

@@ -286,6 +286,7 @@ defmodule OpenCrud.Notation do
       |> elem(2)
       |> Enum.at(0)
 
+    # FIXME: check whether that should really be ':aggregate'
     resolve_aggregate =
       Macro.prewalk(block, [], fn
         {:resolve_aggregate, x, y}, b -> {0, b ++ {:aggregate, x, y}}
@@ -326,13 +327,11 @@ defmodule OpenCrud.Notation do
       #        the API doesn't appear to support that
       middleware Absinthe.Relay.Node.ParseIDs, where: [id_in: unquote(type)]
 
-      resolve(unquote(resolve_list))
-
       private(OpenCrud, :where_field_identifier, unquote(type))
-
       unquote(block)
 
-
+      # FIXME: why does this need to be last?
+      resolve(unquote(resolve_list))
     end
   end
 
