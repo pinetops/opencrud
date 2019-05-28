@@ -107,7 +107,6 @@ defmodule OpencrudTest do
           field :title, :string
           field :author, :author_where_unique_input
         end
-
       end
     end
   end

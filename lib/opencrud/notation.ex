@@ -296,6 +296,12 @@ defmodule OpenCrud.Notation do
       |> elem(2)
       |> Enum.at(0)
 
+    block_without_where =
+      Macro.prewalk(block, [], fn
+        {:where, x, y}, b -> {nil, b}
+        node, b -> {node, b}
+      end)
+
     env
     |> Notation.recordable!(:field)
     |> Notation.record_field!(Inflex.pluralize(type) |> String.to_atom(), [type: quoted_list_type(type)], [
@@ -310,7 +316,7 @@ defmodule OpenCrud.Notation do
       naming_from_attrs!(node_type: type),
       [],
       [
-        node_connection_body(type, resolve_list, resolve_aggregate, block)
+        node_connection_body(type, resolve_list, resolve_aggregate, block_without_where)
       ]
     )
   end
@@ -335,13 +341,16 @@ defmodule OpenCrud.Notation do
     end
   end
 
-  defp node_connection_body(type, resolve_list, resolve_aggregate, _) do
+  defp node_connection_body(type, resolve_list, resolve_aggregate, block) do
     quote do
       arg :where, unquote("#{type}_where_input" |> String.to_atom())
 
       # FIXME: This would be better put on the input object directly, but
       #        the API doesn't appear to support that
       middleware Absinthe.Relay.Node.ParseIDs, where: [id_in: unquote(type)]
+
+      private(Absinthe.Relay, :where_field_identifier, unquote(type))
+      unquote(block)
 
       resolve fn
         args, context ->
@@ -411,6 +420,7 @@ defmodule OpenCrud.Notation do
   defmacro where(do: block) do
     env = __CALLER__
     base_identifier = Notation.get_in_private(env.module, @private_field_identifier_path)
+
     record_input_object!(env, base_identifier, block)
   end
 
