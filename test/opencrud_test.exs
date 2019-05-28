@@ -54,8 +54,14 @@ defmodule OpencrudTest do
         resolve_list fn
           %{where: %{ id_in: ids }}, _ ->
             {:ok, Enum.map(Enum.filter(@authors, fn a -> Enum.member?(ids, elem(a, 1).id) end) , fn a -> elem(a, 1) end)}
+          %{where: %{ first_name: first_name }}, _ ->
+            {:ok, Enum.map(Enum.filter(@authors, fn a -> elem(a, 1).first_name == first_name end) , fn a -> elem(a, 1) end)}
           _, _ ->
             {:ok, Enum.map(@authors, fn a -> elem(a, 1) end)}
+        end
+
+        where do
+          field :first_name, :string
         end
       end
     end
@@ -160,6 +166,39 @@ defmodule OpencrudTest do
                       "first_name" => "Brian",
                       "id" => "QXV0aG9yOjE=",
                       "last_name" => "Phelps"
+                    }
+                  ]
+                }
+              }} == result
+    end
+
+    test " allows querying objects by where block" do
+      result =
+        """
+          query authors($first: Int, $where: AuthorWhereInput) {
+            items: authors(first: $first, where: $where)  {
+              id
+              first_name,
+              last_name,
+              __typename
+            }
+          }
+
+        """
+        |> Absinthe.run(
+          ASimpleTypeSchema,
+          variables: %{"first" => 5, "where" => %{ "first_name" => "Andrew"}}
+        )
+
+      assert {:ok,
+              %{
+                data: %{
+                  "items" => [
+                    %{
+                      "__typename" => "Author",
+                      "first_name" => "Andrew",
+                      "id" => "QXV0aG9yOjI=",
+                      "last_name" => "Sparrow"
                     }
                   ]
                 }

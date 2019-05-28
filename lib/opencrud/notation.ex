@@ -1,4 +1,5 @@
 defmodule OpenCrud.Notation do
+  use Absinthe.Schema.Notation
   alias Absinthe.Schema.Notation
 
   defmacro opencrud_node(type, do: block) do
@@ -28,7 +29,6 @@ defmodule OpenCrud.Notation do
     record_edge!(env, type, block)
     record_where_unique_input!(env, type, block)
     record_update_input!(env, type, block)
-    record_where_input!(env, type, block)
     record_create_input!(env, type, block)
     record_field_create_one_without_type_input!(env, type, block)
   end
@@ -80,20 +80,6 @@ defmodule OpenCrud.Notation do
   defp where_unique_input_body() do
     quote do
       field :id, non_null(:id)
-    end
-  end
-
-  def record_where_input!(env, type, _) do
-    type = "#{type}_where_input" |> String.to_atom()
-
-    Notation.record_input_object!(env, type, [], [
-      where_input_body()
-    ])
-  end
-
-  defp where_input_body() do
-    quote do
-      field :id_in, list_of(non_null(:id))
     end
   end
 
@@ -328,7 +314,7 @@ defmodule OpenCrud.Notation do
     )
   end
 
-  defp list_query_body(type, resolve_list, _) do
+  defp list_query_body(type, resolve_list, block) do
     quote do
       arg :after, :string
       arg :before, :string
@@ -341,6 +327,12 @@ defmodule OpenCrud.Notation do
       middleware Absinthe.Relay.Node.ParseIDs, where: [id_in: unquote(type)]
 
       resolve(unquote(resolve_list))
+
+      private(OpenCrud, :where_field_identifier, unquote(type))
+
+      unquote(block)
+
+
     end
   end
 
@@ -404,6 +396,36 @@ defmodule OpenCrud.Notation do
   defp create_body(type) do
     quote do
       arg :data, non_null(unquote("#{type}_create_input" |> String.to_atom()))
+    end
+  end
+
+  defmacro resolve_list(_, do: block) do
+
+  end
+
+  defmacro resolve_aggregate(_, do: block) do
+
+  end
+
+  @private_field_identifier_path [OpenCrud, :where_field_identifier]
+
+  defmacro where(do: block) do
+    env = __CALLER__
+    base_identifier = Notation.get_in_private(env.module, @private_field_identifier_path)
+    record_input_object!(env, base_identifier, block)
+  end
+
+  def record_input_object!(env, base_identifier, block) do
+    identifier = "#{base_identifier}_where_input" |> String.to_atom()
+
+    Notation.record_input_object!(env, identifier, [], where_body(block))
+  end
+
+  defp where_body(block) do
+    quote do
+      field :id_in, list_of(non_null(:id))
+
+      unquote(block)
     end
   end
 end
