@@ -4,16 +4,22 @@ defmodule OpenCrud.Ecto do
   alias Absinthe.Relay
 
   # extracted from Abisinthe.Relay
-  def paginate(query, args, opts \\ []) do
-    require Ecto.Query
-
+  def page!(args, opts \\ []) do
     with {:ok, offset, limit} <- Relay.Connection.offset_and_limit_for_query(args, opts) do
-      query
-      |> Ecto.Query.limit(^(limit + 1))
-      |> Ecto.Query.offset(^offset)
+      %{:offset => offset, :limit => limit}
     else
-      {:error, _} -> query
+      {:error, _error} -> nil
     end
+  end
+
+  def paginate(query, %{:offset => offset, :limit => limit}) do
+    query
+    |> Ecto.Query.limit(^(limit + 1))
+    |> Ecto.Query.offset(^offset)
+  end
+
+  def paginate(query, nil) do
+    query
   end
 
   def make_connections(records, args, opts \\ []) do
