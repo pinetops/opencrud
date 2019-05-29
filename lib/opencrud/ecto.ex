@@ -4,11 +4,16 @@ defmodule OpenCrud.Ecto do
   alias Absinthe.Relay
 
   # extracted from Abisinthe.Relay
+
   def page!(args, opts \\ []) do
-    with {:ok, offset, limit} <- Relay.Connection.offset_and_limit_for_query(args, opts) do
-      %{:offset => offset, :limit => limit}
+    if args[:first] && args[:skip] do
+      %{:offset => args[:skip], :limit => args[:skip] + args[:first] - 1}
     else
-      {:error, _error} -> nil
+      with {:ok, offset, limit} <- Relay.Connection.offset_and_limit_for_query(args, opts) do
+        %{:offset => offset, :limit => limit}
+      else
+        {:error, _error} -> nil
+      end
     end
   end
 

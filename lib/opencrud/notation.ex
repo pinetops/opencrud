@@ -327,6 +327,7 @@ defmodule OpenCrud.Notation do
       arg :before, :string
       arg :first, :integer
       arg :last, :integer
+      arg :skip, :integer
       arg :where, unquote("#{type}_where_input" |> String.to_atom())
 
       # FIXME: This would be better put on the input object directly, but
