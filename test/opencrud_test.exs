@@ -43,12 +43,12 @@ defmodule OpencrudTest do
       end)
     end
 
-    opencrud_node :author do
+    opencrud_object :author do
       field :first_name, non_null(:string)
       field :last_name, :string
     end
 
-    opencrud_node :book do
+    opencrud_object :book do
       field :title, non_null(:string)
       field :author, non_null(:author)
       #, resolve: fn a ->
@@ -57,7 +57,7 @@ defmodule OpencrudTest do
     end
 
     query do
-      opencrud_node_query :author do
+      opencrud_get :author do
         resolve fn
           %{where: %{ id: id }}, _ ->
             {:ok, Enum.find(@authors, fn a -> id == elem(a, 1).id end) |> elem(1)}

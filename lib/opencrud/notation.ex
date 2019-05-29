@@ -2,11 +2,11 @@ defmodule OpenCrud.Notation do
   use Absinthe.Schema.Notation
   alias Absinthe.Schema.Notation
 
-  defmacro opencrud_node(type, do: block) do
+  defmacro opencrud_object(type, do: block) do
     do_object(__CALLER__, type, block)
   end
 
-  defmacro opencrud_node_query(type, do: block) do
+  defmacro opencrud_get(type, do: block) do
     do_node_query(__CALLER__, type, block)
   end
 
